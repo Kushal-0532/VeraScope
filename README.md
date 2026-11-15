@@ -5,6 +5,7 @@ VeraScope is an AI-powered fact-checking application that analyzes audio and vid
 
 ## Features
 
+
 - **Speech Transcription:** Converts audio and video recordings into text using Whisper-based models.
 - **Speaker Diarization:** Identifies individual speakers and associates them with transcript segments.
 - **Claim Detection:** Uses LLMs to identify potentially fact-checkable statements.
