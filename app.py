@@ -15,6 +15,7 @@ import tempfile
 import streamlit as st
 from dotenv import load_dotenv
 
+import evidence_cache
 import flags
 
 FLAGS = flags.parse_script_args()   # before anything below reads the env switches
@@ -281,6 +282,9 @@ with right:
                 with st.spinner("Detecting claims..."):
                     try:
                         claims, n_lines = detect(digest, lines)
+                    except evidence_cache.CacheMiss:
+                        st.warning("Not in cache: run once with --record")
+                        st.stop()
                     except Exception as e:
                         st.exception(e)
                         st.stop()
@@ -307,6 +311,10 @@ with right:
                     try:
                         vbl, vstats = verify(
                             digest, claims, n_lines, lambda label: status.update(label=label))
+                    except evidence_cache.CacheMiss:
+                        status.update(label="Not in cache", state="error")
+                        st.warning("Not in cache: run once with --record")
+                        st.stop()
                     except Exception as e:
                         st.exception(e)
                         st.stop()

@@ -13,6 +13,8 @@ import math
 import os
 import sys
 
+import evidence_cache
+
 MODEL = "openai/gpt-oss-20b"
 BATCH_SIZE = 20
 CONTEXT = 2  # lines of context on each side of a batch
@@ -98,12 +100,22 @@ def _render_batch(lines, lo, hi):
 
 async def _detect_batch(client, lines, lo, hi, model):
     batch_text = _render_batch(lines, lo, hi)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": batch_text},
+    ]
+    parts = {"endpoint": "groq.chat", "model": model, "messages": messages,
+             "temperature": 0.0, "schema": _SCHEMA["json_schema"]["name"],
+             "reasoning_effort": "low"}
+    cached = await evidence_cache.aget_or_call(
+        "groq", parts, lambda: _groq_call(client, model, messages))
+    return _claims_from(cached["content"], lines, lo, hi)
+
+
+async def _groq_call(client, model, messages):
     resp = await client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": batch_text},
-        ],
+        messages=messages,
         temperature=0.0,
         response_format=_SCHEMA,
         # gpt-oss-20b defaults reasoning_effort to "medium"; on garbled/repetitive
@@ -114,7 +126,11 @@ async def _detect_batch(client, lines, lo, hi, model):
         # room for the actual answer. Found live on audio2.wav's batch 0 (2026-08-23).
         reasoning_effort="low",
     )
-    data = json.loads(resp.choices[0].message.content or "{}")
+    usage = resp.usage.model_dump() if getattr(resp, "usage", None) else None
+    return {"content": json.loads(resp.choices[0].message.content or "{}"), "usage": usage}
+
+
+def _claims_from(data, lines, lo, hi):
     claims = []
     for c in data.get("claims", []):
         line_id = c["line_id"]
@@ -146,6 +162,8 @@ async def detect_claims(lines, concurrency=4, model=MODEL):
                 claims = await _detect_batch(client, lines, lo, hi, model)
                 log.info("batch %d:%d -> %d claims from %d lines", lo, hi, len(claims), hi - lo)
                 return claims
+            except evidence_cache.CacheMiss:
+                raise
             except Exception as e:
                 log.warning("batch %d:%d failed: %r", lo, hi, e)
                 return e
@@ -154,6 +172,8 @@ async def detect_claims(lines, concurrency=4, model=MODEL):
 
     all_claims = []
     for r in results:
+        if isinstance(r, evidence_cache.CacheMiss):
+            raise r  # replay miss is a setup error, not a failed batch
         if isinstance(r, Exception):
             continue
         all_claims.extend(r)

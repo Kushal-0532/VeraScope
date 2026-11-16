@@ -11,6 +11,8 @@ import os
 import sys
 import threading
 
+import evidence_cache
+
 NLI_MODEL = "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
 SNIPPET_CAP = 1500
 SUPPORT_T = 0.85
@@ -55,8 +57,17 @@ def _call_local(claim_text, snippet):
 
 def _call_model(claim_text, snippet):
     """The one thing that actually talks to HF. Isolated so offline tests can
-    monkeypatch below the truncation logic, not replace it."""
-    if os.environ.get("VERASCOPE_LOCAL_NLI") == "1":
+    monkeypatch below the truncation logic, not replace it. Recorded/replayed
+    through evidence_cache (local and hosted keyed separately)."""
+    local = os.environ.get("VERASCOPE_LOCAL_NLI") == "1"
+    parts = {"model": NLI_MODEL, "backend": "local" if local else "hf-inference",
+             "premise": snippet, "hypothesis": claim_text, "template": "{}"}
+    return evidence_cache.get_or_call(
+        "nli", parts, lambda: _call_raw(claim_text, snippet, local))
+
+
+def _call_raw(claim_text, snippet, local):
+    if local:
         return _call_local(claim_text, snippet)
     client = _get_client()
     out = client.zero_shot_classification(
@@ -114,6 +125,8 @@ async def verify(evidence_map, concurrency=8):
             try:
                 s = await asyncio.to_thread(score_pair, claim_id, item["snippet"])
                 return claim_id, item, s, None
+            except evidence_cache.CacheMiss:
+                raise
             except Exception as e:
                 return claim_id, item, None, e
 

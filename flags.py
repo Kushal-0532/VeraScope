@@ -29,6 +29,13 @@ def add_args(ap):
                     help="run the NLI verifier locally (transformers) instead of HF Inference")
     ap.add_argument("--no-diarize", action="store_true",
                     help="skip diarization: every line is SPEAKER_00 (no pyannote, no API)")
+    cache = ap.add_mutually_exclusive_group()
+    cache.add_argument("--record", action="store_true",
+                       help="cache every Groq/Tavily/NLI call (hits are reused)")
+    cache.add_argument("--replay", action="store_true",
+                       help="answer only from the cache; a miss is an error, nothing goes online")
+    cache.add_argument("--refresh", action="store_true",
+                       help="like --record but re-call and overwrite existing entries")
     return ap
 
 
@@ -46,6 +53,12 @@ def apply(args):
         os.environ["VERASCOPE_LOCAL_NLI"] = "1"
     if args.no_diarize:
         os.environ["VERASCOPE_NO_DIARIZE"] = "1"
+    if args.record or args.refresh:
+        os.environ["VERASCOPE_CACHE"] = "record"
+    if args.refresh:
+        os.environ["VERASCOPE_CACHE_REFRESH"] = "1"
+    if args.replay:
+        os.environ["VERASCOPE_CACHE"] = "replay"
     return args
 
 
@@ -58,7 +71,8 @@ def parse_script_args(argv=None):
 
 def _selfcheck():
     keys = ["VERASCOPE_STAGE3", "WHISPERX_ARCH", "WHISPERX_DEVICE",
-            "VERASCOPE_NLI_DEVICE", "VERASCOPE_LOCAL_NLI", "VERASCOPE_NO_DIARIZE"]
+            "VERASCOPE_NLI_DEVICE", "VERASCOPE_LOCAL_NLI", "VERASCOPE_NO_DIARIZE",
+            "VERASCOPE_CACHE", "VERASCOPE_CACHE_REFRESH"]
     saved = {k: os.environ.pop(k, None) for k in keys}
     try:
         parse_script_args([])
@@ -71,6 +85,8 @@ def _selfcheck():
         assert os.environ["WHISPERX_ARCH"] == "tiny"
         assert os.environ["WHISPERX_DEVICE"] == os.environ["VERASCOPE_NLI_DEVICE"] == "cpu"
         assert os.environ["VERASCOPE_NO_DIARIZE"] == "1"
+        parse_script_args(["--refresh"])
+        assert os.environ["VERASCOPE_CACHE"] == "record" and os.environ["VERASCOPE_CACHE_REFRESH"] == "1"
     finally:
         for k, v in saved.items():
             os.environ.pop(k, None)

@@ -18,6 +18,8 @@ import os
 import re
 import sys
 
+import evidence_cache
+
 MAX_RESULTS = 4
 SEARCH_DEPTH = "basic"
 SNIPPET_MIN = 200
@@ -68,12 +70,11 @@ def _snippet_from(result):
 
 
 async def _search_one(client, query, max_results):
-    resp = await client.search(
-        query=query,
-        include_raw_content=True,
-        max_results=max_results,
-        search_depth=SEARCH_DEPTH,
-    )
+    params = dict(query=query, include_raw_content=True,
+                  max_results=max_results, search_depth=SEARCH_DEPTH)
+    resp = await evidence_cache.aget_or_call(
+        "tavily", {"endpoint": "tavily.search", **params},
+        lambda: client.search(**params))
     return resp.get("results", [])
 
 
@@ -91,6 +92,8 @@ async def retrieve(claims, concurrency=4, max_results=MAX_RESULTS):
             try:
                 results = await _search_one(client, query, max_results)
                 return cid, results, None
+            except evidence_cache.CacheMiss:
+                raise
             except Exception as e:
                 return cid, None, e
 
