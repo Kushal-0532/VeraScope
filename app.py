@@ -91,6 +91,12 @@ _RANK = {"couldnt_check": 0, "not_enough_evidence": 1, "no_sources": 1,
          "mostly_disputed": 4, "strongly_disputed": 4}
 
 
+def _seek(t):
+    """on_click callback: runs before the script, so the player renders at t this run
+    (no st.rerun, which also threw the view back to the Transcript tab)."""
+    st.session_state.seek = int(t)
+
+
 def _rank(record):
     return _RANK.get(record["label"], 0)
 
@@ -308,7 +314,8 @@ with right:
         st.warning("No speech found.")
         st.stop()
 
-    transcript_tab, claims_tab = st.tabs(["Transcript", "Claims"])
+    # tracked tab state, so a rerun (seek click, verify) keeps the tab the user is on
+    transcript_tab, claims_tab = st.tabs(["Transcript", "Claims"], key="view", on_change="rerun")
 
     with transcript_tab:
         if failures:
@@ -324,9 +331,8 @@ with right:
         for i, (start, end, spk, text, conf) in enumerate(lines):
             label = "Unknown" if spk is None else names.setdefault(spk, f"Speaker {len(names) + 1}")
             c1, c2 = st.columns([1, 6])
-            if c1.button(f"{dd.ts(start)}", key=f"seek{i}", use_container_width=True):
-                st.session_state.seek = int(start)
-                st.rerun()
+            c1.button(f"{dd.ts(start)}", key=f"seek{i}", use_container_width=True,
+                      on_click=_seek, args=(start,))
             flag = " :orange[(?)]" if conf is not None and conf < low_conf else ""
             tag = ""
             if records := st.session_state.get("claim_verdicts", {}).get(i):
@@ -429,9 +435,8 @@ with right:
             with st.container(border=True):
                 first = g["occurrences"][0]
                 c1, c2 = st.columns([1, 12])
-                if c1.button("▶", key=f"claimseek{claim_id}", help="Play from here"):
-                    st.session_state.seek = int(first["start"])
-                    st.rerun()
+                c1.button("▶", key=f"claimseek{claim_id}", help="Play from here",
+                          on_click=_seek, args=(first["start"],))
                 speakers = ", ".join(sorted({names.get(o["speaker"], o["speaker"] or "Unknown")
                                              for o in g["occurrences"]}))
                 c2.markdown(f'**{_md(speakers)}** at {dd.ts(first["start"])}: '
