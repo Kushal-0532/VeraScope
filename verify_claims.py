@@ -195,6 +195,113 @@ async def verify(evidence_map, concurrency=8):
     return out
 
 
+# ---- Verdict v2 (Phase 33, SPEC Part IV "Verdict rules (locked)") ---------
+
+LABELS = {
+    "strongly_supported": ("✅", "Strongly supported"),
+    "mostly_supported": ("🟢", "Mostly supported"),
+    "mixed": ("🟡", "Mixed"),
+    "mostly_disputed": ("🟠", "Mostly disputed"),
+    "strongly_disputed": ("❌", "Strongly disputed"),
+    "not_enough_evidence": ("⚪", "Not enough evidence"),
+    "no_sources": ("⚪", "No sources found"),
+    "couldnt_check": ("⛔", "Couldn't check"),
+    "not_checked": ("⏳", "Not checked yet"),  # UI only
+}
+_EPS = 1e-9
+_CAP = {"strongly_supported": "mostly_supported", "strongly_disputed": "mostly_disputed"}
+_STANCES = ("agree", "disagree", "no_side", "off_topic")
+
+
+def _band(share):
+    if share >= 0.80 - _EPS:
+        return "strongly_supported"
+    if share >= 0.60 - _EPS:
+        return "mostly_supported"
+    if share > 0.40 + _EPS:
+        return "mixed"
+    if share > 0.20 + _EPS:
+        return "mostly_disputed"
+    return "strongly_disputed"
+
+
+def _cap(label):
+    return _CAP.get(label, label)
+
+
+def _tier_points(src):
+    import credibility
+    tier = src.get("tier") or credibility.trust(src.get("url", ""))["tier"]
+    return tier, src.get("points") or credibility.TIERS[tier]
+
+
+def _warnings(share, voting, n_failed, n_total):
+    """voting: [(stance, tier)] of agree/disagree sources."""
+    out = []
+    high = {st for st, tier in voting if tier == "High"}
+    lean = "agree" if share >= 0.60 - _EPS else "disagree" if share <= 0.40 + _EPS else None
+    text = {"disagree": "A highly trusted source disagrees", "agree": "A highly trusted source agrees"}
+    if lean:
+        other = "disagree" if lean == "agree" else "agree"
+        if other in high:
+            out.append({"key": "trusted_minority", "text": text[other]})
+    elif len(high) == 1:
+        out.append({"key": "trusted_minority", "text": text[next(iter(high))]})
+    if len(voting) == 1:
+        out.append({"key": "single_source", "text": "Only one source took a side"})
+    if all(tier in ("Low", "Unrated") for _, tier in voting):
+        out.append({"key": "low_trust_only", "text": "Only low-trust sources took a side"})
+    if n_failed:
+        out.append({"key": "partial_failures", "text": f"{n_failed} of {n_total} couldn't be read"})
+    return out
+
+
+def verdict(sources, retrieval_failed=False):
+    """Scored sources (stance / failed / tier / points) -> label, share, points, counts,
+    warnings. Only agree/disagree vote; failures never count as disagreement."""
+    counts = dict.fromkeys(_STANCES, 0)
+    counts["failed"] = 0
+    voting, a_pts, d_pts = [], 0, 0
+    for src in sources:
+        if src.get("failed"):
+            counts["failed"] += 1
+            continue
+        st = src.get("stance")
+        if st in counts:
+            counts[st] += 1
+        if st in ("agree", "disagree"):
+            tier, pts = _tier_points(src)
+            voting.append((st, tier))
+            if st == "agree":
+                a_pts += pts
+            else:
+                d_pts += pts
+
+    def out(label, share=None, warnings=()):
+        emoji, text = LABELS[label]
+        has_share = share is not None
+        return {"label": label, "emoji": emoji, "label_text": text,
+                "share": share, "agree_points": a_pts if has_share else None,
+                "disagree_points": d_pts if has_share else None,
+                "warnings": list(warnings), "counts": counts, "sources": sources}
+
+    if not sources:
+        return out("couldnt_check" if retrieval_failed else "no_sources")
+    if counts["failed"] == len(sources):
+        return out("couldnt_check")
+    partial = ([{"key": "partial_failures",
+                 "text": f"{counts['failed']} of {len(sources)} couldn't be read"}]
+               if counts["failed"] else [])
+    if a_pts + d_pts == 0:
+        return out("not_enough_evidence", warnings=partial)
+    share = a_pts / (a_pts + d_pts)
+    warns = _warnings(share, voting, counts["failed"], len(sources))
+    label = _band(share)
+    if any(w["key"] in ("trusted_minority", "single_source", "low_trust_only") for w in warns):
+        label = _cap(label)
+    return out(label, share, warns)
+
+
 def _selfcheck():
     global _call_model
     orig = _call_model
@@ -245,6 +352,10 @@ def _selfcheck():
         assert got == want, (scores, got, want)
 
     _call_model = orig
+    v = verdict([{"stance": "agree", "tier": "High"}, {"stance": "agree", "tier": "High"},
+                 {"stance": "disagree", "tier": "High"}])
+    assert v["label"] == "mostly_supported" and v["warnings"][0]["key"] == "trusted_minority"
+    assert verdict([], retrieval_failed=True)["label"] == "couldnt_check"
     print("selfcheck ok")
 
 
