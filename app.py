@@ -95,6 +95,7 @@ def _seek(t):
     """on_click callback: runs before the script, so the player renders at t this run
     (no st.rerun, which also threw the view back to the Transcript tab)."""
     st.session_state.seek = int(t)
+    st.session_state.seek_n = st.session_state.get("seek_n", 0) + 1
 
 
 def _rank(record):
@@ -285,8 +286,13 @@ with left:
     # playhead API, so clicking a line restarts playback there. Good enough for a demo.
     # autoplay after a seek click: a paused player that moved its start point looks
     # like nothing happened, especially when it is scrolled out of view.
-    st.audio(flac_path, start_time=st.session_state.get("seek", 0),
-             autoplay="seek" in st.session_state)
+    # ponytail: st.audio has no key, so the same start_time twice (transcript line, then
+    # its claim's ▶) is "the same player" and nothing happens. Alternating an end_time
+    # past the end of the file gives every click a new player. Whole seconds only
+    # (st.audio truncates start_time); sub-second needs a custom HTML player.
+    seeking = "seek" in st.session_state
+    st.audio(flac_path, start_time=st.session_state.get("seek", 0), autoplay=seeking,
+             end_time=int(duration) + 2 + st.session_state.get("seek_n", 0) % 2 if seeking else None)
     go = st.button("Transcribe", type="primary", use_container_width=True)
 
 with right:

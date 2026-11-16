@@ -131,3 +131,14 @@ def test_play_from_here_seeks_and_autoplays(monkeypatch, tmp_path):
     at.button(key=f"claimseek{rec['claim_text'].lower().rstrip('.')}").click().run()
     audio = at.get("audio")[0].proto
     assert audio.start_time == int(rec["occurrences"][0]["start"]) and audio.autoplay
+
+
+def test_same_seek_twice_is_a_new_player(monkeypatch, tmp_path):
+    at = _app(monkeypatch, tmp_path, _artifact())
+    at.button(key="seek2").click().run()            # transcript line 2 (20 s)
+    first = at.get("audio")[0].proto
+    rec = _record("berlin")                          # its claim card, same 20 s
+    at.button(key=f"claimseek{rec['claim_text'].lower().rstrip('.')}").click().run()
+    second = at.get("audio")[0].proto
+    assert first.start_time == second.start_time == 20
+    assert first.end_time != second.end_time and second.autoplay
