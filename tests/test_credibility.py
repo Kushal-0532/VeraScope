@@ -50,6 +50,7 @@ def test_high_domains():
     assert "wikipedia.org" in hd and set(cr.HIGH_LIST) <= set(hd)
     assert hd == cr.high_domains()
     assert len(cr.high_domains(10)) == 10
+    assert all(cr._HOSTNAME.fullmatch(d) for d in hd), [d for d in hd if not cr._HOSTNAME.fullmatch(d)]
 
 
 def test_csv_read_once(monkeypatch):

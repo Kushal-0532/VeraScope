@@ -40,6 +40,10 @@ SUFFIX_RULES = [  # (regex on host, reason)
     (re.compile(r"(^|\.)nic\.in$"), "rule: .nic.in"),
 ]
 
+# Tavily include_domains accepts plain hostnames only; the CSV also has paths
+# ("rfi.fr/en") and one en-dash typo ("wvec–13newsnow.com") that 400 the request.
+_HOSTNAME = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
+
 TIERS = {"High": 3, "Medium": 2, "Low": 1, "Unrated": 1}
 
 
@@ -112,7 +116,7 @@ def high_domains(limit=300):
     for d, pc1 in sorted(_ratings().items(), key=lambda x: (-x[1], x[0])):
         if len(out) >= limit or pc1 < PC1_HIGH:
             break
-        if d not in seen and d not in LOW_LIST:
+        if d not in seen and d not in LOW_LIST and _HOSTNAME.fullmatch(d):
             out.append(d)
             seen.add(d)
     return out[:limit]
