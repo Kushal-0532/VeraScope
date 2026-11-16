@@ -1,0 +1,1 @@
+{"kind": "nli", "parts": {"model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7", "backend": "local", "premise": "POV: you find the Eiffel Tower in Berlin. This 1:10 scale replica stands in the Spreepark.", "hypothesis": "The Eiffel Tower is in Berlin.", "template": "{}"}, "value": 0.9988685846328735, "saved_utc": "2026-11-16T12:55:40.797819+00:00"}
