@@ -9,3 +9,8 @@ __pycache__/
 specs/
 handoff/
 .env
+*_artifact.json
+*.flac
+experiments/notebooks/*.zip
+claims.csv
+experiments/notebooks/*.log
