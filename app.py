@@ -24,6 +24,7 @@ import audio_prep  # noqa: E402
 import diarize_demo as dd  # noqa: E402
 import verify_pipeline as vp  # noqa: E402
 from retrieve_evidence import normalize as normalize_claim  # noqa: E402
+from verify_claims import LABELS  # noqa: E402
 
 load_dotenv(os.path.expanduser("~/.env"))
 
@@ -84,13 +85,81 @@ def verify(digest, _claims, n_lines, _on_stage):
     return asyncio.run(vp.verify_claims_list_v2(_claims, n_lines, on_stage=_on_stage))
 
 
-# ponytail: v2 labels on the old cards until Phase 35 rebuilds them.
-def _badge(record):
-    return f"{record['emoji']} {record['label_text']}"
+# "Strongest" claim on a line wins its transcript tag; disputed first (v1 intent).
+_RANK = {"couldnt_check": 0, "not_enough_evidence": 1, "no_sources": 1,
+         "mostly_supported": 2, "strongly_supported": 2, "mixed": 3,
+         "mostly_disputed": 4, "strongly_disputed": 4}
 
 
-def _rank(record):  # strongest wins in the .txt tag: disputed > rest > supported
-    return 2 if "disputed" in record["label"] else 0 if "supported" in record["label"] else 1
+def _rank(record):
+    return _RANK.get(record["label"], 0)
+
+
+def _md(text):
+    """Streamlit markdown renders $...$ as LaTeX; claims and passages quote prices."""
+    return str(text).replace("$", "\\$")
+
+
+def _label_md(record):
+    """`✅ **Strongly supported** (89% · 8 vs 1 points)`; no share → no numbers."""
+    if record is None:
+        emoji, text = LABELS["not_checked"]
+        return f"{emoji} **{text}**"
+    out = f"{record['emoji']} **{record['label_text']}**"
+    if record["share"] is not None:
+        out += (f" ({record['share']:.0%} · {record['agree_points']} vs "
+                f"{record['disagree_points']} points)")
+    return out
+
+
+def _source_line(src):
+    st.markdown(f"\\[{src['source_id']}\\] [{_md(src['domain'])}]({src['url']}) · "
+                f"{src['tier']} ({_md(src['trust_reason'])})")
+    if src.get("best_chunk"):
+        # one line, no leading #/>/+ so scraped page text can't become headings or quotes
+        st.caption(_md(" ".join(src["best_chunk"].split())[:300].lstrip("#>+-*\\ ")))
+    if src.get("decided_by") == "llm" and src.get("quote"):
+        st.markdown(f"*“{_md(src['quote'])}”* — checked quote")
+
+
+_GROUPS = [("agree", "✅ Agree"), ("disagree", "❌ Disagree"), ("no_side", "➖ No side"),
+           ("off_topic", "🚫 Off-topic"), ("failed", "⚠️ Couldn't read")]
+
+
+def _sources(record):
+    groups = {k: [] for k, _ in _GROUPS}
+    for src in record["sources"]:
+        groups["failed" if src.get("failed") else src["stance"]].append(src)
+    for key, title in _GROUPS:
+        if not groups[key]:
+            continue
+        if key in ("agree", "disagree"):   # the sides that vote: always visible
+            st.markdown(f"**{title} ({len(groups[key])})**")
+            for src in groups[key]:
+                _source_line(src)
+        else:
+            with st.expander(f"{title} ({len(groups[key])})"):
+                for src in groups[key]:
+                    _source_line(src)
+
+
+_LEGEND = "\n".join(
+    ["| Label | Meaning |", "|---|---|",
+     f"| {LABELS['strongly_supported'][0]} {LABELS['strongly_supported'][1]} | ≥ 80% of the trust points that took a side agree |",
+     f"| {LABELS['mostly_supported'][0]} {LABELS['mostly_supported'][1]} | 60–80% agree |",
+     f"| {LABELS['mixed'][0]} {LABELS['mixed'][1]} | 40–60% agree |",
+     f"| {LABELS['mostly_disputed'][0]} {LABELS['mostly_disputed'][1]} | 20–40% agree |",
+     f"| {LABELS['strongly_disputed'][0]} {LABELS['strongly_disputed'][1]} | ≤ 20% agree |",
+     f"| {LABELS['not_enough_evidence'][0]} {LABELS['not_enough_evidence'][1]} | sources found, none took a side |",
+     f"| {LABELS['no_sources'][0]} {LABELS['no_sources'][1]} | the search returned nothing usable |",
+     f"| {LABELS['couldnt_check'][0]} {LABELS['couldnt_check'][1]} | every search or scoring call failed — says nothing about truth |",
+     f"| {LABELS['not_checked'][0]} {LABELS['not_checked'][1]} | verification hasn't run |",
+     "", "Trust points per website: High 3, Medium 2, Low or Unrated 1. One vote per website.",
+     "", "| Warning | Meaning |", "|---|---|",
+     "| ⚠️ A highly trusted source disagrees / agrees | a High source is on the losing side; Strongly → Mostly |",
+     "| ⚠️ Only one source took a side | Strongly → Mostly |",
+     "| ⚠️ Only low-trust sources took a side | Strongly → Mostly |",
+     "| ⚠️ k of n couldn't be read | some pages failed to load or score; label unchanged |"])
 
 
 def _group_claims(claims):
@@ -256,7 +325,11 @@ with right:
                 st.session_state.seek = int(start)
                 st.rerun()
             flag = " :orange[(?)]" if conf is not None and conf < low_conf else ""
-            c2.markdown(f"**{label}:** {text}{flag}")
+            tag = ""
+            if records := st.session_state.get("claim_verdicts", {}).get(i):
+                top = max(records, key=_rank)
+                tag = f" · {top['emoji']} {top['label_text']}"
+            c2.markdown(f"**{label}:** {_md(text)}{flag}{tag}")
 
         st.caption(f"{len(names)} speaker(s), {len(lines)} lines. (?) = low acoustic confidence.")
 
@@ -334,31 +407,40 @@ with right:
             if lc["couldnt_check"]:
                 st.warning(f"{lc['couldnt_check']} claim(s) couldn't be checked "
                            "(search or scoring failed). That is not a dispute.")
+            with st.expander("Run stats"):
+                g = verify_stats.get("groq_calls", {})
+                c = verify_stats.get("cache", {})
+                st.markdown(
+                    f"- Tavily credits: {verify_stats.get('tavily_credits', 0)}\n"
+                    f"- Groq calls: detect {g.get('detect', 0)}, tier-2 {g.get('tier2', 0)}, "
+                    f"summary {g.get('summary', 0)}\n"
+                    f"- Tier-2 skipped (over budget): {verify_stats.get('tier2_skipped', 0)}, "
+                    f"quote check failures: {verify_stats.get('quote_failures', 0)}\n"
+                    f"- Cache: {c.get('hits', 0)} hits, {c.get('misses', 0)} misses")
+        with st.expander("What do the labels mean?"):
+            st.markdown(_LEGEND)
 
         for claim_id, g in grouped.items():
             record = _verdict_for(claim_id, g["occurrences"], verdicts_by_line)
-            badge = f" {_badge(record)}" if record else " :gray[not yet verified]"
             with st.container(border=True):
                 first = g["occurrences"][0]
-                c1, c2 = st.columns([1, 6])
-                if c1.button(dd.ts(first["start"]), key=f"claimseek{claim_id}", use_container_width=True):
+                c1, c2 = st.columns([1, 12])
+                if c1.button("▶", key=f"claimseek{claim_id}", help="Play from here"):
                     st.session_state.seek = int(first["start"])
                     st.rerun()
-                sources = ", ".join(sorted({o["speaker"] or "Unknown" for o in g["occurrences"]}))
-                lines_seen = ", ".join(dd.ts(o["start"]) for o in g["occurrences"])
-                c2.markdown(f'**{sources}:** "{g["claim_text"]}"{badge}')
+                speakers = ", ".join(sorted({names.get(o["speaker"], o["speaker"] or "Unknown")
+                                             for o in g["occurrences"]}))
+                c2.markdown(f'**{_md(speakers)}** at {dd.ts(first["start"])}: '
+                            f'"{_md(g["claim_text"])}" — {_label_md(record)}')
                 if len(g["occurrences"]) > 1:
-                    c2.caption(f"said at {lines_seen}")
-                if record:
-                    with c2.expander("Evidence"):
-                        if record["share"] is not None:
-                            st.markdown(f"Agree share {record['share']:.2f} "
-                                        f"({record['agree_points']} vs {record['disagree_points']} trust points).")
-                        for w in record["warnings"]:
-                            st.caption(f"⚠ {w['text']}")
-                        for ev in record["sources"]:
-                            stance = "failed" if ev.get("failed") else ev.get("stance")
-                            st.markdown(f"- [{ev['domain']}]({ev['url']}) — {stance} · "
-                                        f"{ev['tier']} ({ev['trust_reason']})")
-                            if ev.get("best_chunk"):
-                                st.caption(ev["best_chunk"][:300])
+                    c2.caption("said at " + ", ".join(dd.ts(o["start"]) for o in g["occurrences"]))
+                if record is None:
+                    continue
+                for w in record["warnings"]:
+                    c2.caption(f"⚠️ {_md(w['text'])}")
+                if record["label"] == "couldnt_check":
+                    c2.caption("Search or scoring failed — this says nothing about "
+                               "whether the claim is true.")
+                with c2:
+                    _sources(record)
+                # Phase 36: "Summarize sources" button goes here.
