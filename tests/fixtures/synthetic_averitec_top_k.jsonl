@@ -1,0 +1,4 @@
+{"claim_id": 0, "claim": "Synthetic claim A is true.", "top_100": [{"sentence": "The fact-check says A is true.", "url": "https://www.factcheck-a.com/a-is-true"}, {"sentence": "Another page on the same fact-checker.", "url": "https://factcheck-a.com/other"}, {"sentence": "The original tweet about A.", "url": "https://twitter.com/x/status/1"}, {"sentence": "A different tweet with a line separator.", "url": "https://twitter.com/y/status/2"}, {"sentence": "News reports A.", "url": "https://web.archive.org/web/2/https://news.org/a"}, {"sentence": "More news on A.", "url": "https://news.org/a2"}]}
+{"claim_id": 1, "claim": "Synthetic claim B is false.", "top_100": [{"sentence": "B is wrong.", "url": "https://bbc.co.uk/b"}]}
+{"claim_id": 2, "claim": "Synthetic claim C is cherry-picked.", "top_100": []}
+{"claim_id": 3, "claim": "Synthetic claim D cannot be checked.", "top_100": [{"sentence": "  ", "url": "https://empty.org"}]}

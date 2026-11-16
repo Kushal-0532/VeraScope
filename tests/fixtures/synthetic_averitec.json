@@ -1,0 +1,167 @@
+[
+ {
+  "claim": "Synthetic claim A is true.",
+  "required_reannotation": false,
+  "label": "Supported",
+  "justification": "j",
+  "claim_date": "9-9-2020",
+  "speaker": null,
+  "original_claim_url": "https://twitter.com/x/status/1",
+  "fact_checking_article": "https://web.archive.org/web/20201103001419/https://www.factcheck-a.com/a-is-true",
+  "reporting_source": "Facebook",
+  "location_ISO_code": null,
+  "claim_types": [
+   "Event/Property Claim"
+  ],
+  "fact_checking_strategies": [
+   "Written Evidence"
+  ],
+  "questions": [
+   {
+    "question": "q",
+    "answers": [
+     {
+      "answer": "a",
+      "answer_type": "Abstractive",
+      "source_url": "https://ans.org",
+      "cached_source_url": null,
+      "source_medium": "Web text"
+     }
+    ]
+   }
+  ],
+  "cached_original_claim_url": "https://web.archive.org/web/20201113115127/https://twitter.com/x/status/1"
+ },
+ {
+  "claim": "Synthetic claim B is false.",
+  "required_reannotation": false,
+  "label": "Refuted",
+  "justification": "j",
+  "claim_date": "31-10-2020",
+  "speaker": null,
+  "original_claim_url": null,
+  "fact_checking_article": "https://web.archive.org/web/20210101000000/https://factcheck-b.co.uk/b",
+  "reporting_source": "Facebook",
+  "location_ISO_code": null,
+  "claim_types": [
+   "Event/Property Claim"
+  ],
+  "fact_checking_strategies": [
+   "Written Evidence"
+  ],
+  "questions": [
+   {
+    "question": "q",
+    "answers": [
+     {
+      "answer": "a",
+      "answer_type": "Abstractive",
+      "source_url": "https://ans.org",
+      "cached_source_url": null,
+      "source_medium": "Web text"
+     }
+    ]
+   }
+  ],
+  "cached_original_claim_url": null
+ },
+ {
+  "claim": "Synthetic claim C is cherry-picked.",
+  "required_reannotation": false,
+  "label": "Conflicting Evidence/Cherrypicking",
+  "justification": "j",
+  "claim_date": "1-10-2020",
+  "speaker": null,
+  "original_claim_url": null,
+  "fact_checking_article": "https://web.archive.org/web/1/https://fc-c.org/c",
+  "reporting_source": "Facebook",
+  "location_ISO_code": null,
+  "claim_types": [
+   "Event/Property Claim"
+  ],
+  "fact_checking_strategies": [
+   "Written Evidence"
+  ],
+  "questions": [
+   {
+    "question": "q",
+    "answers": [
+     {
+      "answer": "a",
+      "answer_type": "Abstractive",
+      "source_url": "https://ans.org",
+      "cached_source_url": null,
+      "source_medium": "Web text"
+     }
+    ]
+   }
+  ],
+  "cached_original_claim_url": null
+ },
+ {
+  "claim": "Synthetic claim D cannot be checked.",
+  "required_reannotation": false,
+  "label": "Not Enough Evidence",
+  "justification": "j",
+  "claim_date": "26-8-2020",
+  "speaker": null,
+  "original_claim_url": null,
+  "fact_checking_article": "https://web.archive.org/web/1/https://fc-d.org/d",
+  "reporting_source": "Facebook",
+  "location_ISO_code": null,
+  "claim_types": [
+   "Event/Property Claim"
+  ],
+  "fact_checking_strategies": [
+   "Written Evidence"
+  ],
+  "questions": [
+   {
+    "question": "q",
+    "answers": [
+     {
+      "answer": "a",
+      "answer_type": "Abstractive",
+      "source_url": "https://ans.org",
+      "cached_source_url": null,
+      "source_medium": "Web text"
+     }
+    ]
+   }
+  ],
+  "cached_original_claim_url": null
+ },
+ {
+  "claim": "Synthetic claim E has a bad label.",
+  "required_reannotation": false,
+  "label": "Mostly True",
+  "justification": "j",
+  "claim_date": "9-9-2020",
+  "speaker": null,
+  "original_claim_url": null,
+  "fact_checking_article": "https://fc-e.org/e",
+  "reporting_source": "Facebook",
+  "location_ISO_code": null,
+  "claim_types": [
+   "Event/Property Claim"
+  ],
+  "fact_checking_strategies": [
+   "Written Evidence"
+  ],
+  "questions": [
+   {
+    "question": "q",
+    "answers": [
+     {
+      "answer": "a",
+      "answer_type": "Abstractive",
+      "source_url": "https://ans.org",
+      "cached_source_url": null,
+      "source_medium": "Web text"
+     }
+    ]
+   }
+  ],
+  "cached_original_claim_url": null
+ }
+]
