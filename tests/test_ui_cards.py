@@ -122,3 +122,12 @@ def test_rank_disputed_first():
     order = ["couldnt_check", "no_sources", "strongly_supported", "mixed", "strongly_disputed"]
     assert [rank[k] for k in order] == sorted(rank[k] for k in order)
     assert rank["not_enough_evidence"] == rank["no_sources"] < rank["mostly_supported"]
+
+
+def test_play_from_here_seeks_and_autoplays(monkeypatch, tmp_path):
+    at = _app(monkeypatch, tmp_path, _artifact())
+    assert not at.get("audio")[0].proto.autoplay
+    rec = _record("berlin")
+    at.button(key=f"claimseek{rec['claim_text'].lower().rstrip('.')}").click().run()
+    audio = at.get("audio")[0].proto
+    assert audio.start_time == int(rec["occurrences"][0]["start"]) and audio.autoplay

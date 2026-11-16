@@ -277,7 +277,10 @@ with left:
     st.subheader("Audio")
     # ponytail: seek by re-rendering the player at a new start_time. Streamlit has no
     # playhead API, so clicking a line restarts playback there. Good enough for a demo.
-    st.audio(flac_path, start_time=st.session_state.get("seek", 0))
+    # autoplay after a seek click: a paused player that moved its start point looks
+    # like nothing happened, especially when it is scrolled out of view.
+    st.audio(flac_path, start_time=st.session_state.get("seek", 0),
+             autoplay="seek" in st.session_state)
     go = st.button("Transcribe", type="primary", use_container_width=True)
 
 with right:
@@ -415,7 +418,8 @@ with right:
                     f"- Groq calls: detect {g.get('detect', 0)}, tier-2 {g.get('tier2', 0)}, "
                     f"summary {g.get('summary', 0)}\n"
                     f"- Tier-2 skipped (over budget): {verify_stats.get('tier2_skipped', 0)}, "
-                    f"quote check failures: {verify_stats.get('quote_failures', 0)}\n"
+                    f"LLM answers rejected (quote not found in the source, NLI label kept): "
+                    f"{verify_stats.get('quote_failures', 0)}\n"
                     f"- Cache: {c.get('hits', 0)} hits, {c.get('misses', 0)} misses")
         with st.expander("What do the labels mean?"):
             st.markdown(_LEGEND)
