@@ -11,6 +11,7 @@ import json
 import logging
 import math
 import os
+import re
 import sys
 
 import evidence_cache
@@ -45,7 +46,15 @@ line_id.
 
 Most lines are not check-worthy. Returning few or zero claims is normal and
 expected.
+
+Search queries: for each claim also write
+- query_neutral: a short keyword web search (at most 20 words, no quotes, no
+  operators, no site:) that would find the original source of the fact;
+- query_fact_check: the same key terms followed by "fact check".
 """
+
+QUERY_MAX = 400  # Tavily query length limit
+_WS = re.compile(r"\s+")
 
 _SCHEMA = {
     "type": "json_schema",
@@ -62,8 +71,11 @@ _SCHEMA = {
                         "properties": {
                             "line_id": {"type": "integer"},
                             "claim_text": {"type": "string"},
+                            "query_neutral": {"type": "string"},
+                            "query_fact_check": {"type": "string"},
                         },
-                        "required": ["line_id", "claim_text"],
+                        "required": ["line_id", "claim_text", "query_neutral",
+                                     "query_fact_check"],
                         "additionalProperties": False,
                     },
                 }
@@ -109,6 +121,10 @@ async def _detect_batch(client, lines, lo, hi, model):
              "reasoning_effort": "low"}
     cached = await evidence_cache.aget_or_call(
         "groq", parts, lambda: _groq_call(client, model, messages))
+    u = cached.get("usage") or {}
+    usage_total["batches"] += 1
+    for k in ("prompt_tokens", "completion_tokens"):
+        usage_total[k] += u.get(k) or 0
     return _claims_from(cached["content"], lines, lo, hi)
 
 
@@ -130,6 +146,20 @@ async def _groq_call(client, model, messages):
     return {"content": json.loads(resp.choices[0].message.content or "{}"), "usage": usage}
 
 
+def _clean_queries(claim_text, qn, qf):
+    """-> [neutral, fact_check] cleaned; empty / over-long -> claim text; dupes -> one."""
+    out = []
+    for q in (qn, qf):
+        q = _WS.sub(" ", q or "").strip()
+        if not q or len(q) > QUERY_MAX:
+            q = _WS.sub(" ", claim_text).strip()[:QUERY_MAX]
+        out.append(q)
+    return out[:1] if out[0].casefold() == out[1].casefold() else out
+
+
+usage_total = {"prompt_tokens": 0, "completion_tokens": 0, "batches": 0}
+
+
 def _claims_from(data, lines, lo, hi):
     claims = []
     for c in data.get("claims", []):
@@ -144,6 +174,8 @@ def _claims_from(data, lines, lo, hi):
             "line_id": line_id,
             "speaker": speaker,
             "start": start,
+            "queries": _clean_queries(c["claim_text"], c.get("query_neutral"),
+                                      c.get("query_fact_check")),
         })
     return claims
 
