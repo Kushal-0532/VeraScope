@@ -45,10 +45,20 @@ def load_audio(path):
     return audio
 
 
+NO_DIARIZE_TURNS = [(0.0, float("inf"), "SPEAKER_00")]
+
+
+def _no_diarize():
+    """--no-diarize (flags.py): one speaker covering the whole file, no model, no API."""
+    return os.environ.get("VERASCOPE_NO_DIARIZE") == "1"
+
+
 def diarize(path, token, min_speakers, max_speakers):
     """pyannoteAI hosted diarization on the full file. Always one job, never
     chunked (Prior Decision 2: speaker labels are per-job cluster IDs and
     don't align across separate jobs)."""
+    if _no_diarize():
+        return NO_DIARIZE_TURNS
     from pyannoteai.sdk import Client
     c = Client(token)
     url = c.upload(path)
@@ -259,25 +269,17 @@ def main():
                     help="silence (s) that starts a new line for the same speaker")
     ap.add_argument("--low-conf", type=float, default=0.75,
                     help="mark lines below this alignment confidence with (?)")
-    ap.add_argument("--whisper-arch", default=None,
-                    help="whisperx model size (tiny..large-v3); Stage 3 only")
-    ap.add_argument("--device", default=None,
-                    help="cuda or cpu; default auto. Stage 3 only")
-    args = ap.parse_args()
+    import flags
+    args = flags.apply(flags.add_args(ap).parse_args())
 
     # ponytail: one env flag selects the local WhisperX path, same switch app.py
-    # uses. Phase 19 deletes the hosted branch and both flags go with it.
-    stage3 = os.environ.get("VERASCOPE_STAGE3") == "1" or bool(
-        args.whisper_arch or args.device)
-    if args.whisper_arch:
-        os.environ["WHISPERX_ARCH"] = args.whisper_arch
-    if args.device:
-        os.environ["WHISPERX_DEVICE"] = args.device
+    # uses (flags.py sets it). Phase 19 deletes the hosted branch.
+    stage3 = os.environ.get("VERASCOPE_STAGE3") == "1"
 
     if args.min_speakers > args.max_speakers or args.min_speakers < 1:
         die("need 1 <= --min-speakers <= --max-speakers")
 
-    if not stage3 and not args.pyannoteai_key:
+    if not stage3 and not args.pyannoteai_key and not _no_diarize():
         die("no PYANNOTEAI_API_KEY: set it in ~/.env or the environment, "
             "or pass --pyannoteai-key (https://dashboard.pyannote.ai/).")
 
@@ -425,6 +427,8 @@ def wx_diarize(path, min_speakers=1, max_speakers=5):
 
     Same return shape as the hosted diarize(), so assign_speaker/group_lines
     take it unmodified. One unchunked pass over the whole file (Decision 2)."""
+    if _no_diarize():
+        return NO_DIARIZE_TURNS
     import wx_transcribe
     df = _diarization_pipeline(wx_transcribe._device())(
         path, min_speakers=min_speakers, max_speakers=max_speakers)

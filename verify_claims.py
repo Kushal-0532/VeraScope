@@ -9,6 +9,7 @@ import asyncio
 import logging
 import os
 import sys
+import threading
 
 NLI_MODEL = "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
 SNIPPET_CAP = 1500
@@ -33,9 +34,30 @@ def _get_client():
     return _client
 
 
+_local = None
+_local_lock = threading.Lock()
+
+
+def _call_local(claim_text, snippet):
+    """Same model on CPU via transformers. With one candidate label the pipeline
+    scores entailment vs contradiction, matching the hosted API's semantics."""
+    global _local
+    with _local_lock:  # ponytail: one lock, pipeline isn't thread-safe; batch if it gets slow
+        if _local is None:
+            import torch
+            from transformers import pipeline
+            device = os.environ.get("VERASCOPE_NLI_DEVICE") or (
+                "cuda" if torch.cuda.is_available() else "cpu")
+            _local = pipeline("zero-shot-classification", model=NLI_MODEL, device=device)
+        out = _local(snippet, candidate_labels=[claim_text], hypothesis_template="{}")
+    return out["scores"][0]
+
+
 def _call_model(claim_text, snippet):
     """The one thing that actually talks to HF. Isolated so offline tests can
     monkeypatch below the truncation logic, not replace it."""
+    if os.environ.get("VERASCOPE_LOCAL_NLI") == "1":
+        return _call_local(claim_text, snippet)
     client = _get_client()
     out = client.zero_shot_classification(
         snippet,

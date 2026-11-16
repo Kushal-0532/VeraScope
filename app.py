@@ -1,10 +1,13 @@
 """Streamlit UI for diarize_demo: audio on the left, Transcript/Claims tabs on the right.
 
 Run: streamlit run app.py
+Local/offline testing flags go after `--` (see flags.py):
+    streamlit run app.py -- --whisperx-offline --whisperx-model tiny --nli-offline --no-diarize
 """
 
 import asyncio
 import hashlib
+import importlib.util
 import json
 import os
 import tempfile
@@ -12,10 +15,14 @@ import tempfile
 import streamlit as st
 from dotenv import load_dotenv
 
-import audio_prep
-import diarize_demo as dd
-import verify_pipeline as vp
-from retrieve_evidence import normalize as normalize_claim
+import flags
+
+FLAGS = flags.parse_script_args()   # before anything below reads the env switches
+
+import audio_prep  # noqa: E402
+import diarize_demo as dd  # noqa: E402
+import verify_pipeline as vp  # noqa: E402
+from retrieve_evidence import normalize as normalize_claim  # noqa: E402
 
 load_dotenv(os.path.expanduser("~/.env"))
 
@@ -116,13 +123,25 @@ with st.sidebar:
 
     arch = None
     if STAGE3:
+        if importlib.util.find_spec("whisperx") is None:
+            st.error("--whisperx-offline needs `whisperx` in this environment. Install it in "
+                     "a separate venv (it pins its own torch): `python3 -m venv ~/.venvs/wx && "
+                     "~/.venvs/wx/bin/pip install whisperx streamlit python-dotenv groq "
+                     "tavily-python huggingface_hub`.")
+            st.stop()
         import torch
-        if torch.cuda.is_available():
+        if os.environ.get("WHISPERX_DEVICE", "cuda" if torch.cuda.is_available() else "cpu") == "cuda":
             st.caption(f"Device: cuda — {torch.cuda.get_device_name(0)}")
         else:
-            st.warning("Device: cpu — a long file will take many minutes.")
-        arch = st.selectbox("Model size", ["tiny", "base", "small", "medium",
-                                           "large-v3"], index=3)  # Phase 23: medium default
+            st.warning("Device: cpu — a long file will take many minutes. Use model `tiny`.")
+        default_arch = os.environ.get("WHISPERX_ARCH", "medium")  # Phase 23: medium default
+        arch = st.selectbox("Model size", flags.MODELS, index=flags.MODELS.index(default_arch))
+
+    modes = [m for m, on in [("local WhisperX", STAGE3),
+                             ("local NLI", os.environ.get("VERASCOPE_LOCAL_NLI") == "1"),
+                             ("diarization off", dd._no_diarize())] if on]
+    if modes:
+        st.caption("Test modes: " + ", ".join(modes))
 
     tavily_ready = bool(os.environ.get("TAVILY_API_KEY"))
     if not tavily_ready:
@@ -132,14 +151,15 @@ with st.sidebar:
 # Stage 1 blocks only on what it actually needs; Stage 2 keys gate the Claims
 # tab (Phase 14 behaviour), they never stop the whole app.
 if STAGE3:
-    if not os.environ.get("HF_TOKEN"):
+    if not os.environ.get("HF_TOKEN") and not dd._no_diarize():  # gated pyannote models only
         st.error("Missing HF_TOKEN. Set it in ~/.env or the environment, and "
                  "accept the gated models at "
                  "huggingface.co/pyannote/speaker-diarization-3.1 and "
                  "huggingface.co/pyannote/segmentation-3.0 with the same account.")
         st.stop()
 elif missing := [k for k in ("PYANNOTEAI_API_KEY", "GROQ_API_KEY")
-                 if not os.environ.get(k)]:
+                 if not os.environ.get(k)
+                 and not (k == "PYANNOTEAI_API_KEY" and dd._no_diarize())]:
     st.error(f"Missing required key(s): {', '.join(missing)}. "
              "Set them in ~/.env or the environment.")
     st.stop()
