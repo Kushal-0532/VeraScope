@@ -43,16 +43,21 @@ _local_lock = threading.Lock()
 def _call_local(claim_text, snippet):
     """Same model on CPU via transformers. With one candidate label the pipeline
     scores entailment vs contradiction, matching the hosted API's semantics."""
-    global _local
-    with _local_lock:  # ponytail: one lock, pipeline isn't thread-safe; batch if it gets slow
-        if _local is None:
-            import torch
-            from transformers import pipeline
-            device = os.environ.get("VERASCOPE_NLI_DEVICE") or (
-                "cuda" if torch.cuda.is_available() else "cpu")
-            _local = pipeline("zero-shot-classification", model=NLI_MODEL, device=device)
-        out = _local(snippet, candidate_labels=[claim_text], hypothesis_template="{}")
+    with _local_lock:  # ponytail: one lock, pipeline isn't thread-safe
+        out = _get_local()(snippet, candidate_labels=[claim_text], hypothesis_template="{}")
     return out["scores"][0]
+
+
+def _get_local():
+    """Load the pipeline once. Call with _local_lock held."""
+    global _local
+    if _local is None:
+        import torch
+        from transformers import pipeline
+        device = os.environ.get("VERASCOPE_NLI_DEVICE") or (
+            "cuda" if torch.cuda.is_available() else "cpu")
+        _local = pipeline("zero-shot-classification", model=NLI_MODEL, device=device)
+    return _local
 
 
 def _call_model(claim_text, snippet):
@@ -60,10 +65,8 @@ def _call_model(claim_text, snippet):
     monkeypatch below the truncation logic, not replace it. Recorded/replayed
     through evidence_cache (local and hosted keyed separately)."""
     local = os.environ.get("VERASCOPE_LOCAL_NLI") == "1"
-    parts = {"model": NLI_MODEL, "backend": "local" if local else "hf-inference",
-             "premise": snippet, "hypothesis": claim_text, "template": "{}"}
     return evidence_cache.get_or_call(
-        "nli", parts, lambda: _call_raw(claim_text, snippet, local))
+        "nli", _nli_parts(claim_text, snippet, local), lambda: _call_raw(claim_text, snippet, local))
 
 
 def _call_raw(claim_text, snippet, local):
@@ -77,6 +80,34 @@ def _call_raw(claim_text, snippet, local):
         model=NLI_MODEL,
     )
     return out[0].score
+
+
+def _nli_parts(claim_text, snippet, local):
+    return {"model": NLI_MODEL, "backend": "local" if local else "hf-inference",
+            "premise": snippet, "hypothesis": claim_text, "template": "{}"}
+
+
+def _score_batch_raw(claim_text, snippets, local):
+    """One pipeline call for all premises of one claim (GPU-friendly)."""
+    if not local:  # hosted has no batch endpoint; HF serverless is 402 anyway
+        return [_call_raw(claim_text, s, False) for s in snippets]
+    with _local_lock:
+        out = _get_local()(list(snippets), candidate_labels=[claim_text], hypothesis_template="{}")
+    out = [out] if isinstance(out, dict) else out
+    return [o["scores"][0] for o in out]
+
+
+def score_pairs(claim_text, chunks):
+    """premise=each chunk, hypothesis=claim -> [P(entailment)]. Cached per pair
+    (same key as score_pair), misses scored in one batch. Local NLI is the Stage 4
+    default; VERASCOPE_LOCAL_NLI=0 forces the hosted API."""
+    local = os.environ.get("VERASCOPE_LOCAL_NLI", "1") != "0"
+    chunks = [c[:SNIPPET_CAP] for c in chunks]
+    if not chunks:
+        return []
+    return evidence_cache.get_many(
+        "nli", [_nli_parts(claim_text, c, local) for c in chunks],
+        lambda miss: _score_batch_raw(claim_text, [chunks[i] for i in miss], local))
 
 
 def score_pair(claim_text, snippet):

@@ -108,6 +108,22 @@ async def aget_or_call(kind, parts, afn):
     return value
 
 
+def get_many(kind, parts_list, batch_fn):
+    """Per-item cache, one batched call for the misses: batch_fn(miss_indices) ->
+    values in that order. Replay raises CacheMiss on the first miss."""
+    looked = [_lookup(kind, parts) for parts in parts_list]
+    out = [v for _, _, _, v in looked]
+    miss = [i for i, (_, _, hit, _) in enumerate(looked) if not hit]
+    if miss:
+        values = list(batch_fn(miss))
+        if len(values) != len(miss):
+            raise ValueError(f"batch_fn returned {len(values)} values for {len(miss)} misses")
+        for i, v in zip(miss, values):
+            _save(kind, parts_list[i], looked[i][1], v)
+            out[i] = v
+    return out
+
+
 def _selfcheck():
     with tempfile.TemporaryDirectory() as d:
         os.environ["VERASCOPE_CACHE_DIR"] = d
