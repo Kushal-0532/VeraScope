@@ -1,0 +1,804 @@
+{
+ "_note": "Phase 34 golden: written from a replay run of tests/fixtures/cache_audio2 (recorded live 2026-11-16, local NLI). Regenerate only with a recorded run.",
+ "lines": [
+  [
+   0.02,
+   3.005939177101968,
+   "?",
+   "THANKS FOR JOINING MID US ON MORNING IT THIS THURSDAY.",
+   null
+  ],
+  [
+   3.0612343470483006,
+   6.987191413237925,
+   "?",
+   "IS ALMOST TIME TO FOR THE KIDS ON START PUTTING THE BACKPACKS HOMEWORK.",
+   null
+  ],
+  [
+   7.042486583184258,
+   8.756636851520572,
+   "?",
+   "AND PICKING UP OH, THE NEW MAN.",
+   null
+  ],
+  [
+   8.811932021466905,
+   14.56262969588551,
+   "?",
+   "IN STUDY SHOWS THAT STUDENTS SCHOOL THOSE EARLY ELEMENTARY GETTING YEARS ARE ACTUALLY TOO MUCH HOMEWORK.",
+   null
+  ],
+  [
+   14.617924865831842,
+   20.755688729874777,
+   "?",
+   "IN RESEARCHERS THE WORST CASE, THE FOUND CHILDREN IN FIRST THREE GRADE HAD UP TO RECOMMENDED TIMES THE EXPERTS.",
+   null
+  ],
+  [
+   20.81098389982111,
+   25.566368515205724,
+   "?",
+   "WORKLOAD BY EDUCATION AS I SAID, WE ASSURE PROFESSIONALS, YOU THIS STUDY WAS CHILDREN.",
+   null
+  ],
+  [
+   25.621663685152058,
+   28.607602862254026,
+   "?",
+   "DONE BY NOT BY THE STUDIO IS A LITTLE OF BIT HOMEWORK.",
+   null
+  ],
+  [
+   28.66289803220036,
+   29.87939177101968,
+   "?",
+   "I THINK IT'S HOMEWORK.",
+   null
+  ],
+  [
+   29.93468694096601,
+   32.64415026833632,
+   "?",
+   "A LITTLE BIT I OF THINK IT'S A LITTLE BIT OF YOU.",
+   null
+  ],
+  [
+   32.69944543828265,
+   35.90656529516995,
+   "?",
+   "THIS PROFESSIONALS, NOT BY STUDY WAS BUT DONE BY CHILDREN.",
+   null
+  ],
+  [
+   35.96186046511628,
+   36.95717352415027,
+   "?",
+   "IT IS INTERESTING.",
+   null
+  ],
+  [
+   37.012468694096604,
+   41.10431127012523,
+   "?",
+   "THEY GUIDELINE HAVE THIS KIND OF 10-MINUTE WHERE IN KINDERGARTEN HOMEWORK.",
+   null
+  ],
+  [
+   41.15960644007156,
+   44.14554561717353,
+   "?",
+   "YOU'RE SUPPOSED TO HAVE NO IN FIRST GRADE, 10 MINUTES.",
+   null
+  ],
+  [
+   44.20084078711986,
+   48.900930232558146,
+   "?",
+   "BUT, MIKE, THE FIRST GRADERS IN THIS SURVEY, THEY WERE DOING QUITE A BIT OF HOMEWORK.",
+   null
+  ],
+  [
+   48.95622540250448,
+   49.287996422182474,
+   "?",
+   "CRAZY.",
+   null
+  ],
+  [
+   49.34329159212881,
+   51.49980322003579,
+   "?",
+   "28 MINUTES, WHICH THAT'S I A THINK LOT.",
+   null
+  ],
+  [
+   51.55509838998211,
+   53.49042933810376,
+   "?",
+   "IS THE IT'S HOMEWORK IS A HOMEWORK.",
+   null
+  ],
+  [
+   53.54572450805009,
+   54.153971377459754,
+   "?",
+   "A HOMEWORK.",
+   null
+  ],
+  [
+   54.20926654740609,
+   55.09398926654741,
+   "?",
+   "IT'S A HOMEWORK.",
+   null
+  ],
+  [
+   55.149284436493744,
+   56.64225402504473,
+   "?",
+   "IT'S A HOMEWORK TO OR READ.",
+   null
+  ],
+  [
+   56.69754919499106,
+   61.84,
+   "?",
+   "JUST LEARNING AT THAT LEVEL YOU THINK WHAT KIND OF HOMEWORK 30 MINUTES A DAY TO A 6-YEAR-OLD.",
+   null
+  ],
+  [
+   65.46,
+   65.58,
+   "?",
+   "ISN'T IT MORE IMPORTANT AT THAT",
+   null
+  ],
+  [
+   67.34,
+   69.31785714285714,
+   "?",
+   "AGE TO BE OUTSIDE OR SOCIALIZING PICKING YOUR NOSE AND EATING IT.",
+   null
+  ],
+  [
+   69.34828571428571,
+   70.29157142857143,
+   "?",
+   "OR DOING SOME TYPE OF ACTIVITY.",
+   null
+  ],
+  [
+   70.322,
+   70.74799999999999,
+   "?",
+   "ALL THE FUNDS.",
+   null
+  ],
+  [
+   70.77842857142856,
+   70.961,
+   "?",
+   "RIGHT.",
+   null
+  ],
+  [
+   70.99142857142857,
+   71.6,
+   "?",
+   "IT'S A HALF AN HOUR.",
+   null
+  ],
+  [
+   73.5,
+   73.66,
+   "?",
+   "IT'S A HALF AN HOUR IN THE DAY.",
+   null
+  ],
+  [
+   75.5,
+   77.48,
+   "?",
+   "THIS FEELS A LITTLE BIT TO LIKE ME",
+   null
+  ],
+  [
+   79.0,
+   82.4896682464455,
+   "?",
+   "I'M THE SAME PEOPLE THAT WANT I'M NOT GOING GOING TO DO IT.",
+   null
+  ],
+  [
+   82.54881516587677,
+   83.0811374407583,
+   "?",
+   "TO DO IT.",
+   null
+  ],
+  [
+   83.14028436018958,
+   84.26407582938388,
+   "?",
+   "I'M GOING TO DO IT.",
+   null
+  ],
+  [
+   84.32322274881517,
+   86.80739336492891,
+   "?",
+   "I'M DOING HOMEWORK WITH YOUR KIDS I'M YET?",
+   null
+  ],
+  [
+   86.8665402843602,
+   89.23241706161139,
+   "?",
+   "DOING THAT HOMEWORK KID CAN'T DO MYSELF.",
+   null
+  ],
+  [
+   89.29156398104266,
+   91.48,
+   "?",
+   "THAT'S WHERE THIS IS COMING ANYTHING.",
+   null
+  ],
+  [
+   93.01075,
+   93.82462096774194,
+   "?",
+   "I I DON'T KNOW.",
+   null
+  ],
+  [
+   93.87887903225807,
+   94.47571774193548,
+   "?",
+   "DON'T KNOW.",
+   null
+  ],
+  [
+   94.52997580645162,
+   95.2353306451613,
+   "?",
+   "I DON'T KNOW.",
+   null
+  ],
+  [
+   95.28958870967742,
+   96.32049193548387,
+   "?",
+   "I LIKE MY HOMEWORK.",
+   null
+  ],
+  [
+   96.37475,
+   97.62268548387097,
+   "?",
+   "I WANT KIDS TO DO MORE.",
+   null
+  ],
+  [
+   97.6769435483871,
+   97.94823387096774,
+   "?",
+   "YEAH.",
+   null
+  ],
+  [
+   98.00249193548387,
+   98.27378225806451,
+   "?",
+   "MORE?",
+   null
+  ],
+  [
+   98.32804032258065,
+   99.03339516129031,
+   "?",
+   "HALF AN HOUR.",
+   null
+  ],
+  [
+   99.08765322580645,
+   101.20371774193548,
+   "?",
+   "YOU CAN COME HOMEWORK WITH MY TWO KIDS.",
+   null
+  ],
+  [
+   101.25797580645161,
+   103.31978225806452,
+   "?",
+   "TO MY HOUSE AND DO LEAST FUN DAD EVER.",
+   null
+  ],
+  [
+   103.37404032258064,
+   104.24216935483871,
+   "?",
+   "HOMEWORK IS FUN.",
+   null
+  ],
+  [
+   104.29642741935484,
+   109.83075,
+   "?",
+   "TO BE HONEST, LOOKING FORWARD TO SITTING DOWN I AM ACTUALLY WITH MY KIDS AND DOING HOMEWORK WITH THEM.",
+   null
+  ],
+  [
+   112.05075,
+   117.72032369062119,
+   "?",
+   "BUT I GET THAT IS NOT SOMETHING SOMETHING THAT'S THAT'S POSSIBLE FOR GOING TO BE A REALITY OR A LOT OF FAMILIES.",
+   null
+  ],
+  [
+   117.77094488428745,
+   120.20076218026796,
+   "?",
+   "I I THINK IT'S A GREAT THINK IT'S A GREAT THING.",
+   null
+  ],
+  [
+   120.25138337393422,
+   120.55511053593179,
+   "?",
+   "THING.",
+   null
+  ],
+  [
+   120.60573172959805,
+   121.97250395858708,
+   "?",
+   "I THINK IT'S A GREAT THING.",
+   null
+  ],
+  [
+   122.02312515225334,
+   123.38989738124238,
+   "?",
+   "I THINK IT'S A GREAT THING.",
+   null
+  ],
+  [
+   123.44051857490864,
+   125.51598751522533,
+   "?",
+   "I THINK IT'S IF THERE WERE A GREAT THING.",
+   null
+  ],
+  [
+   125.5666087088916,
+   136.5007865408039,
+   "?",
+   "FAMILIES OR WHERE PARENTS ENGLISH IS A SECOND LANGUAGE OR DEGREE, ONLY A HIGH SCHOOL THEY FOUND ONLY COLLEGE COMFORTABLE HELPING THEIR KIDS EDUCATED PARENTS FELT THE MOST WITH THEIR HOMEWORK LONG-TERM THROUGH SCHOOL.",
+   null
+  ],
+  [
+   136.55140773447016,
+   140.601103227771,
+   "?",
+   "THE AND THEN THERE WAS NO STRESS IN BUT IF THEY DIDN'T HAVE RELATIONSHIPS THERE.",
+   null
+  ],
+  [
+   140.65172442143728,
+   141.20855755176615,
+   "?",
+   "THE STRESS.",
+   null
+  ],
+  [
+   141.2591787454324,
+   145.1063894640682,
+   "?",
+   "EDUCATION, THERE WAS TREMENDOUS I THINK THAT'S A I THINK THAT'S A GOOD IDEA.",
+   null
+  ],
+  [
+   145.15701065773447,
+   146.7768888550548,
+   "?",
+   "I THINK THAT'S A GOOD GOOD IDEA.",
+   null
+  ],
+  [
+   146.82751004872108,
+   147.08061601705236,
+   "?",
+   "IDEA.",
+   null
+  ],
+  [
+   147.13123721071864,
+   149.2573273447016,
+   "?",
+   "WHICH TO ME THAT SEEMS LIKE THAT'S ENOUGH.",
+   null
+  ],
+  [
+   149.30794853836784,
+   153.61075,
+   "?",
+   "IF YOU'RE HOMEWORK, BASICALLY YOU'RE DOING 30 MINUTES OF PROBABLY DOING LIKE SPELLING",
+   null
+  ],
+  [
+   155.71075,
+   157.59026807228915,
+   "?",
+   "AND YOU CAN SEE WHY TEACHERS THINK MATH.",
+   null
+  ],
+  [
+   157.6372560240964,
+   158.57701506024097,
+   "?",
+   "THIS IS A GOOD IDEA.",
+   null
+  ],
+  [
+   158.62400301204818,
+   159.61075,
+   "?",
+   "SOME PARENTS WANT IT.",
+   null
+  ],
+  [
+   162.67075,
+   165.288952247191,
+   "?",
+   "THEY FEEL LIKE THE HOMEWORK MEANS THAT THE KIDS ARE LEARNING.",
+   null
+  ],
+  [
+   165.3318735955056,
+   166.49075,
+   "?",
+   "I THINK BACK TO SOME OF THE",
+   null
+  ],
+  [
+   169.45074,
+   175.01723281914894,
+   "?",
+   "MATH HOMEWORK FOR ME MAYBE HELP SPANISH BUT THEN I LOOK BACK TO MAYBE THE WHICH I STILL CAN KIND ABLE FAMILY IS GOING TO DO TO IT.",
+   null
+  ],
+  [
+   175.06005199468083,
+   176.17335055851063,
+   "?",
+   "BE I'M GOING TO BE HONEST.",
+   null
+  ],
+  [
+   176.21616973404255,
+   180.1127147074468,
+   "?",
+   "MY CONCERN WOULD BE ARE THAT THEY DOING ADDITIONAL HOMEWORK THEY ARE NOT LEARNING IN CLASS.",
+   null
+  ],
+  [
+   180.15553388297872,
+   185.55075,
+   "?",
+   "TO MAKE UP FOR THE STUFF THAT THEY ARE JUST TEACHING TO A TEST AND SAYING, HEY, DO THIS ON TOP THAT COULD BE A BIT OF A OF IT.",
+   null
+  ]
+ ],
+ "projection": {
+  "a study shows that early elementary students receive too much homework": {
+   "label": "mostly_supported",
+   "warnings": [
+    "single_source"
+   ],
+   "counts": {
+    "agree": 1,
+    "disagree": 0,
+    "no_side": 5,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "apa.org",
+     "agree",
+     "High"
+    ],
+    [
+     "edutopia.org",
+     "no_side",
+     "Unrated"
+    ],
+    [
+     "frontiersin.org",
+     "no_side",
+     "High"
+    ],
+    [
+     "nih.gov",
+     "no_side",
+     "High"
+    ],
+    [
+     "sandiego.edu",
+     "no_side",
+     "High"
+    ],
+    [
+     "stanford.edu",
+     "no_side",
+     "High"
+    ]
+   ],
+   "share": 1.0
+  },
+  "first graders in the survey were doing a significant amount of homework": {
+   "label": "strongly_supported",
+   "warnings": [],
+   "counts": {
+    "agree": 4,
+    "disagree": 0,
+    "no_side": 0,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "brookings.edu",
+     "agree",
+     "High"
+    ],
+    [
+     "ed.gov",
+     "agree",
+     "High"
+    ],
+    [
+     "educationnext.org",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "graduateprogram.org",
+     "agree",
+     "Unrated"
+    ]
+   ],
+   "share": 1.0
+  },
+  "first graders were doing 28 minutes of homework": {
+   "label": "mostly_supported",
+   "warnings": [
+    "trusted_minority"
+   ],
+   "counts": {
+    "agree": 4,
+    "disagree": 1,
+    "no_side": 1,
+    "off_topic": 1,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "bestbrains.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "brookings.edu",
+     "agree",
+     "High"
+    ],
+    [
+     "ed.gov",
+     "no_side",
+     "High"
+    ],
+    [
+     "educationnext.org",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "highlights.com",
+     "off_topic",
+     "Unrated"
+    ],
+    [
+     "parentingscience.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "usnews.com",
+     "disagree",
+     "High"
+    ]
+   ],
+   "share": 0.667
+  },
+  "guidelines recommend 10 minutes of homework for kindergarten students": {
+   "label": "strongly_supported",
+   "warnings": [],
+   "counts": {
+    "agree": 6,
+    "disagree": 0,
+    "no_side": 0,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "americanprogress.org",
+     "agree",
+     "Medium"
+    ],
+    [
+     "capta.org",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "edutopia.org",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "learningattheprimarypond.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "learningsuccess.ai",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "nea.org",
+     "agree",
+     "Unrated"
+    ]
+   ],
+   "share": 1.0
+  },
+  "guidelines recommend no homework for first grade students and 10 minutes for second grade": {
+   "label": "strongly_disputed",
+   "warnings": [],
+   "counts": {
+    "agree": 0,
+    "disagree": 7,
+    "no_side": 0,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "apa.org",
+     "disagree",
+     "High"
+    ],
+    [
+     "capta.org",
+     "disagree",
+     "Unrated"
+    ],
+    [
+     "ednavigator.org",
+     "disagree",
+     "Unrated"
+    ],
+    [
+     "edutopia.org",
+     "disagree",
+     "Unrated"
+    ],
+    [
+     "myflfamilies.com",
+     "disagree",
+     "Unrated"
+    ],
+    [
+     "nea.org",
+     "disagree",
+     "Unrated"
+    ],
+    [
+     "newtoncountyschools.org",
+     "disagree",
+     "Unrated"
+    ]
+   ],
+   "share": 0.0
+  },
+  "parents feel that the homework means the kids are learning": {
+   "label": "strongly_supported",
+   "warnings": [],
+   "counts": {
+    "agree": 3,
+    "disagree": 0,
+    "no_side": 2,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "alfiekohn.org",
+     "no_side",
+     "Unrated"
+    ],
+    [
+     "nih.gov",
+     "agree",
+     "High"
+    ],
+    [
+     "sandiego.edu",
+     "agree",
+     "High"
+    ],
+    [
+     "teach4theheart.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "theconversation.com",
+     "no_side",
+     "High"
+    ]
+   ],
+   "share": 1.0
+  },
+  "some parents want the homework program": {
+   "label": "strongly_supported",
+   "warnings": [],
+   "counts": {
+    "agree": 6,
+    "disagree": 0,
+    "no_side": 0,
+    "off_topic": 0,
+    "failed": 0
+   },
+   "sources": [
+    [
+     "harvard.edu",
+     "agree",
+     "High"
+    ],
+    [
+     "humanrestorationproject.org",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "nih.gov",
+     "agree",
+     "High"
+    ],
+    [
+     "thegravelygroup.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "themom-forum.com",
+     "agree",
+     "Unrated"
+    ],
+    [
+     "youtube.com",
+     "agree",
+     "Low"
+    ]
+   ],
+   "share": 1.0
+  }
+ }
+}

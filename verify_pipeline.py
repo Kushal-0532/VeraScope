@@ -134,6 +134,115 @@ async def verify_lines(lines, on_stage=None):
     return verdicts_by_line, stats
 
 
+# ---- v2 (Phase 34): steps 2-6, data contract in specs/phases/34-pipeline-wiring.md ----
+
+STAGES_V2 = ["Searching the web…", "Reading sources…", "Double-checking hard claims…",
+             "Weighing sources…"]
+_ORDER = {"agree": 0, "disagree": 1, "no_side": 2, "off_topic": 3}
+
+
+def _sort_key(s):
+    return (4 if s.get("failed") else _ORDER.get(s.get("stance"), 4),
+            -(s.get("points") or 0), s.get("source_id", 0))
+
+
+def _new_stats_v2(claims, n_lines):
+    import math
+    import claim_detect
+    from verify_claims import LABELS
+    return {"n_lines": n_lines, "n_claims": len(claims), "n_unique_claims": 0,
+            "label_counts": {k: 0 for k in LABELS if k != "not_checked"},
+            "tavily_credits": 0,
+            # ponytail: detect_claims always sends ceil(n/BATCH_SIZE) batches, so derive it
+            # instead of threading a counter through detect_only.
+            "groq_calls": {"detect": math.ceil(n_lines / claim_detect.BATCH_SIZE),
+                           "tier2": 0, "summary": 0},
+            "tier2_skipped": 0, "quote_failures": 0, "nli_pairs": 0,
+            "cache": {"hits": 0, "misses": 0, "writes": 0},
+            "elapsed": dict.fromkeys(["retrieve", "passages", "tier2", "verdict"], 0.0)}
+
+
+async def verify_claims_list_v2(claims, n_lines, on_stage=None):
+    """claims from detect_only -> (verdicts_by_line, stats), v2 records (schema_version 2).
+    Every line a claim was said on gets the SAME record object."""
+    import adjudicate
+    import credibility
+    import evidence_cache
+    import passages
+    import verify_claims
+    from retrieve_evidence import normalize, retrieve_v2
+
+    stats = _new_stats_v2(claims, n_lines)
+    cache0 = evidence_cache.stats()
+    say = on_stage or (lambda _: None)
+
+    def tick(stage, t0):
+        stats["elapsed"][stage] = time.perf_counter() - t0
+        return time.perf_counter()
+
+    t = time.perf_counter()
+    say(STAGES_V2[0])
+    evidence, failures, backmap = await retrieve_v2(claims) if claims else ({}, {}, {})
+    t = tick("retrieve", t)
+    stats["n_unique_claims"] = len(backmap)
+    stats["tavily_credits"] = sum(e["credits_used"] for e in evidence.values())
+
+    first = {}
+    occurrences = {}
+    for c in claims:
+        cid = normalize(c["claim_text"])
+        first.setdefault(cid, c["claim_text"])
+        occurrences.setdefault(cid, []).append(
+            {k: c.get(k) for k in ("line_id", "speaker", "start")})
+    order = sorted(backmap, key=lambda cid: min(backmap[cid]))  # line order (tier-2 budget)
+
+    say(STAGES_V2[1])
+
+    def scorer(claim_text, chunks):  # looked up per call so tests can swap score_pairs
+        stats["nli_pairs"] += len(chunks)
+        return verify_claims.score_pairs(claim_text, chunks)
+    items = [{"claim_text": first[cid],
+              "sources": passages.select(first[cid], evidence.get(cid, {}).get("sources", []),
+                                         scorer)}
+             for cid in order]
+    t = tick("passages", t)
+
+    say(STAGES_V2[2])
+    items, adj = await adjudicate.run(items) if items else ([], adjudicate._new_stats())
+    stats["groq_calls"]["tier2"] = adj["tier2_calls"]
+    stats["tier2_skipped"] = adj["tier2_skipped"]
+    stats["quote_failures"] = adj["quote_failures"]
+    t = tick("tier2", t)
+
+    say(STAGES_V2[3])
+    verdicts_by_line = {}
+    for cid, item in zip(order, items):
+        sources = sorted(({**s, **credibility.trust(s.get("url", ""))} for s in item["sources"]),
+                         key=_sort_key)
+        # "zero usable results" is no_sources; only "every query failed" is couldnt_check
+        v = verify_claims.verdict(sources, retrieval_failed=failures.get(cid) == "every query failed")
+        record = {"schema_version": 2, "claim_id": cid, "claim_text": item["claim_text"],
+                  "occurrences": occurrences[cid], **v, "summary": None}
+        stats["label_counts"][record["label"]] += 1
+        for line_id in backmap[cid]:
+            verdicts_by_line.setdefault(line_id, []).append(record)
+    tick("verdict", t)
+
+    for kind, c in evidence_cache.stats().items():
+        for k in stats["cache"]:
+            stats["cache"][k] += c[k] - cache0.get(kind, {}).get(k, 0)
+    return verdicts_by_line, stats
+
+
+async def verify_lines_v2(lines, on_stage=None):
+    t0 = time.perf_counter()
+    claims, n_lines = await detect_only(lines, on_stage=on_stage)
+    detect_elapsed = time.perf_counter() - t0
+    verdicts_by_line, stats = await verify_claims_list_v2(claims, n_lines, on_stage=on_stage)
+    stats["elapsed"]["detect"] = detect_elapsed
+    return verdicts_by_line, stats
+
+
 def _selfcheck():
     import claim_detect, retrieve_evidence, verify_claims
 

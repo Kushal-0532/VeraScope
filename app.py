@@ -81,15 +81,16 @@ def verify(digest, _claims, n_lines, _on_stage):
     """Expensive second Stage 2 step: retrieve + verify. Separate cache key
     from detect() so re-detecting (if ever needed) doesn't force re-spending
     Tavily/HF credits, and vice versa."""
-    return asyncio.run(vp.verify_claims_list(_claims, n_lines, on_stage=_on_stage))
+    return asyncio.run(vp.verify_claims_list_v2(_claims, n_lines, on_stage=_on_stage))
 
 
-_VERDICT_BADGE = {
-    "supported": ":green[✓ supported]",
-    "disputed": ":red[✗ disputed]",
-    "unclear": ":gray[? unclear]",
-}
-_VERDICT_RANK = {"disputed": 2, "unclear": 1, "supported": 0}
+# ponytail: v2 labels on the old cards until Phase 35 rebuilds them.
+def _badge(record):
+    return f"{record['emoji']} {record['label_text']}"
+
+
+def _rank(record):  # strongest wins in the .txt tag: disputed > rest > supported
+    return 2 if "disputed" in record["label"] else 0 if "supported" in record["label"] else 1
 
 
 def _group_claims(claims):
@@ -186,7 +187,9 @@ if st.session_state.get("_last_digest") != digest:
 # matches this upload's digest, render from it and never touch a model or API.
 if (art := os.environ.get("VERASCOPE_ARTIFACT")) and "lines" not in st.session_state:
     a = json.load(open(art))
-    if a["digest"] == digest:
+    if a.get("schema_version") != 2:
+        st.info("Old artifact format — regenerate with make_artifact.py")
+    elif a["digest"] == digest:
         st.session_state.update(
             lines=[tuple(l) for l in a["lines"]], failures=a["failures"],
             claims=a["claims"], claims_n_lines=a["n_lines"],
@@ -263,8 +266,7 @@ with right:
             records = verdicts_by_line.get(i, [])
             tag = ""
             if records:
-                strongest = max(records, key=lambda r: _VERDICT_RANK[r["verdict"]])
-                tag = f" [{strongest['verdict']}]"
+                tag = f" [{max(records, key=_rank)['label']}]"
             return f'[{dd.ts(s)}-{dd.ts(e)}] {names.get(spk, "Unknown")}: "{t}"{tag}'
 
         st.download_button(
@@ -307,7 +309,7 @@ with right:
             st.caption(f"{len(grouped)} unique claim(s) found, "
                        f"{len(claims)} occurrence(s) across the transcript.")
             if st.button("Verify claims", type="primary", disabled=not tavily_ready):
-                with st.status("Retrieving evidence...", expanded=True) as status:
+                with st.status(vp.STAGES_V2[0], expanded=True) as status:
                     try:
                         vbl, vstats = verify(
                             digest, claims, n_lines, lambda label: status.update(label=label))
@@ -326,22 +328,16 @@ with right:
                 st.caption("Set TAVILY_API_KEY in ~/.env to enable verification.")
 
         if verify_stats:
-            n_failed = verify_stats["n_retrieve_failures"] + verify_stats["n_verify_failures"]
-            vc = verify_stats["verdict_counts"]
-            st.caption(
-                f"{verify_stats['n_unique_claims']} unique claim(s) checked — "
-                f"{vc['supported']} supported, {vc['disputed']} disputed, {vc['unclear']} unclear."
-            )
-            if n_failed:
-                st.warning(f"{n_failed} evidence lookup(s) failed during verification. "
-                           "Affected claims may show as unclear with fewer sources.")
-                with st.expander("Verification stage details"):
-                    st.text(f"retrieval failures: {verify_stats['n_retrieve_failures']}")
-                    st.text(f"verification failures: {verify_stats['n_verify_failures']}")
+            lc = verify_stats["label_counts"]
+            st.caption(f"{verify_stats['n_unique_claims']} unique claim(s) checked — " + ", ".join(
+                f"{n} {k.replace('_', ' ')}" for k, n in lc.items() if n))
+            if lc["couldnt_check"]:
+                st.warning(f"{lc['couldnt_check']} claim(s) couldn't be checked "
+                           "(search or scoring failed). That is not a dispute.")
 
         for claim_id, g in grouped.items():
             record = _verdict_for(claim_id, g["occurrences"], verdicts_by_line)
-            badge = f" {_VERDICT_BADGE[record['verdict']]}" if record else " :gray[not yet verified]"
+            badge = f" {_badge(record)}" if record else " :gray[not yet verified]"
             with st.container(border=True):
                 first = g["occurrences"][0]
                 c1, c2 = st.columns([1, 6])
@@ -355,9 +351,14 @@ with right:
                     c2.caption(f"said at {lines_seen}")
                 if record:
                     with c2.expander("Evidence"):
-                        st.markdown(
-                            f"Agreement strength {record['confidence']:.2f} across "
-                            f"{len(record['evidence_used'])} source(s) — not a truth probability.")
-                        for ev in record["evidence_used"]:
-                            st.markdown(f"- [{ev['url']}]({ev['url']}) — {ev['label']} ({ev['score']:.2f})")
-                            st.caption(ev["snippet"][:300])
+                        if record["share"] is not None:
+                            st.markdown(f"Agree share {record['share']:.2f} "
+                                        f"({record['agree_points']} vs {record['disagree_points']} trust points).")
+                        for w in record["warnings"]:
+                            st.caption(f"⚠ {w['text']}")
+                        for ev in record["sources"]:
+                            stance = "failed" if ev.get("failed") else ev.get("stance")
+                            st.markdown(f"- [{ev['domain']}]({ev['url']}) — {stance} · "
+                                        f"{ev['tier']} ({ev['trust_reason']})")
+                            if ev.get("best_chunk"):
+                                st.caption(ev["best_chunk"][:300])
