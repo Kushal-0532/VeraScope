@@ -1,4 +1,5 @@
 # VeraScope
+### AI-Powered Audio Transcription and Fact-Checking
 
 **Automatic fact-checking of spoken audio and video.** Upload a recording. VeraScope
 transcribes it, works out who spoke when, finds the check-worthy factual claims, searches
@@ -31,7 +32,8 @@ documents are kept in the parent `capstone_project/` repo (see
 16. [Free-tier budgets](#free-tier-budgets)
 17. [Development workflow](#development-workflow)
 18. [Known limitations](#known-limitations)
-19. [Data and licences](#data-and-licences)
+19. [Future scope](#future-scope)
+20. [Data and licences](#data-and-licences)
 
 ---
 
@@ -191,7 +193,15 @@ VeraScope/
 
 ## Quick start
 
-### 1. Requirements
+### 1. Get the code
+
+```bash
+git clone https://github.com/Kushal-0532/VeraScope.git
+cd VeraScope
+python -m venv venv && source venv/bin/activate
+```
+
+### 2. Requirements
 
 - Python 3.11, and **`ffmpeg`** on the `PATH`.
 - No requirements file. The packages are:
@@ -205,7 +215,18 @@ VeraScope/
 
 `onbox.sh` is the tested install for the GPU box.
 
-### 2. API keys
+| Component | Technologies |
+|---|---|
+| Language | Python |
+| Interface | Streamlit |
+| Speech recognition | Whisper (Groq), WhisperX |
+| Speaker diarization | pyannoteAI, pyannote 3.1 |
+| Language models | Groq API (`openai/gpt-oss-20b`) |
+| Evidence retrieval | Tavily API |
+| NLI | mDeBERTa-v3 XNLI (local or HF Inference) |
+| Audio processing | FFmpeg |
+
+### 3. API keys
 
 Keys are read from `~/.env`. A real environment variable wins over the file.
 
@@ -232,7 +253,7 @@ flowchart TD
     T -- yes --> V["✅ Full fact-checking"]
 ```
 
-### 3. Run
+### 4. Run
 
 ```bash
 streamlit run app.py                                   # hosted Stage 1
@@ -907,6 +928,11 @@ git history (22 Aug – 9 Sep 2026) holds the early development log.
 
 ## Known limitations
 
+VeraScope is an experimental fact-checking tool. Its results depend on transcription
+accuracy, speaker identification, language-model outputs and the relevance of the
+evidence it retrieves. **Review each verdict alongside its sources. Don't treat it as a
+definitive conclusion.**
+
 - **Timestamp jitter:** seeking can be off by ±0.5 s per line (worst case about 3 s),
   because Whisper's segment timing isn't exact. `st.audio` also truncates to whole
   seconds. Sub-second seeking would need a custom player.
@@ -918,6 +944,16 @@ git history (22 Aug – 9 Sep 2026) holds the early development log.
   cleanup.
 - **No labelled real-audio benchmark** for verdict accuracy. E4 and E5 measure the
   NLI step on FEVER, not the full v2 pipeline.
+
+---
+
+## Future scope
+
+- Improve transcription and diarization accuracy.
+- Expand multilingual support.
+- Enhance claim detection and evidence retrieval.
+- Improve verification reliability and processing efficiency.
+- Cited source summaries on each claim card (Phase 36).
 
 ---
 
