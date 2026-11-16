@@ -6,7 +6,7 @@ __pycache__/
 *.md
 !README.md
 *.ipynb
-specs/
+specs
 handoff/
 .env
 *_artifact.json
